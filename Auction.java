@@ -3,7 +3,7 @@ import java.util.ArrayList;
 /**
  * A simple model of an auction.
  * The auction maintains a list of lots of arbitrary length.
- *
+ * 
  * @author David J. Barnes and Michael Kölling.
  * @version 7.0
  */
@@ -55,8 +55,8 @@ public class Auction
     {
         Lot selectedLot = getLot(lotNumber);
         if(selectedLot != null) {
-            Bid aBid = new Bid(bidder, value);
-            boolean successful = selectedLot.bidFor(aBid);
+            // Eliminated the intermediate aBid variable using an anonymous object
+            boolean successful = selectedLot.bidFor(new Bid(bidder, value));
             if(successful) {
                 System.out.println("The bid for lot number " +
                                    lotNumber + " was successful.");
@@ -72,6 +72,40 @@ public class Auction
     }
 
     /**
+     * Close the auction and print out details of all the lots.
+     */
+    public void close()
+    {
+        for(Lot lot : listOfLots) {
+            Bid highestBid = lot.getHighestBid();
+            if(highestBid != null) {
+                System.out.println("Lot " + lot.getNumber() + " (" + lot.getDescription() + 
+                                   ") sold to " + highestBid.getBidder().getName() + 
+                                   " for " + highestBid.getValue() + ".");
+            }
+            else {
+                System.out.println("Lot " + lot.getNumber() + " (" + lot.getDescription() + 
+                                   ") received no bids.");
+            }
+        }
+    }
+
+    /**
+     * Return a list of all unsold lots.
+     * @return An ArrayList containing lots with no bids.
+     */
+    public ArrayList<Lot> getUnsold()
+    {
+        ArrayList<Lot> unsoldLots = new ArrayList<>();
+        for(Lot lot : listOfLots) {
+            if(lot.getHighestBid() == null) {
+                unsoldLots.add(lot);
+            }
+        }
+        return unsoldLots;
+    }
+
+    /**
      * Return the lot with the given number. Return null if a lot with this 
      * number does not exist.
      * @param lotNumber The number of the lot to return.
@@ -79,26 +113,27 @@ public class Auction
      */
     public Lot getLot(int lotNumber)
     {
-        if((lotNumber >= 1) && (lotNumber < nextLotNumber)) {
-            // The number seems to be reasonable.
-            Lot selectedLot = listOfLots.get(lotNumber - 1);
-            // Include a confidence check to be sure we have the
-            // right lot.
-            if(selectedLot.getNumber() != lotNumber) {
-                System.out.println("Internal error: Lot number " +
-                                   selectedLot.getNumber() +
-                                   " was returned instead of " +
-                                   lotNumber);
-                // Don't return an invalid lot.
-                selectedLot = null;
+        // Rewritten to search by lot number instead of relying on fixed index positions
+        for(Lot lot : listOfLots) {
+            if(lot.getNumber() == lotNumber) {
+                return lot;
             }
-            return selectedLot;
         }
-        else {
-            System.out.println("Lot number: " + lotNumber +
-                               " does not exist.");
-            return null;
+        System.out.println("Lot number: " + lotNumber + " does not exist.");
+        return null;
+    }
+
+    /**
+     * Remove the lot with the given lot number.
+     * @param number The number of the lot to be removed.
+     * @return The Lot with the given number, or null if there is no such lot.
+     */
+    public Lot removeLot(int number)
+    {
+        Lot lotToRemove = getLot(number);
+        if(lotToRemove != null) {
+            listOfLots.remove(lotToRemove);
         }
+        return lotToRemove;
     }
 }
-
